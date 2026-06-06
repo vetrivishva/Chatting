@@ -357,6 +357,113 @@ html, body {
 .ac0{background:#FF6B6B} .ac1{background:#007AFF} .ac2{background:#34C759}
 .ac3{background:#FF9500} .ac4{background:#AF52DE} .ac5{background:#FF2D55}
 .ac6{background:#5AC8FA} .ac7{background:#30B0C7} .ac8{background:#FF6482}
+
+/* ── MSG ACTION MENU ─────────────── */
+.msg-action-menu {
+  position: fixed; z-index: 500;
+  background: var(--bg2); border: .5px solid var(--sep);
+  border-radius: 14px; padding: 5px 0; min-width: 160px;
+  box-shadow: 0 12px 36px rgba(0,0,0,.55);
+  animation: menuPop .15s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes menuPop { from{opacity:0;transform:scale(.88)} to{opacity:1;transform:none} }
+.msg-action-item {
+  padding: 13px 16px; font-size: 15px; cursor: pointer;
+  display: flex; align-items: center; gap: 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+.msg-action-item:active { background: var(--bg3); }
+.msg-action-item i { width: 18px; text-align: center; font-size: 14px; color: var(--blue); }
+.msg-action-item.danger { color: var(--red); }
+.msg-action-item.danger i { color: var(--red); }
+.msg-action-sep { height: .5px; background: var(--sep); margin: 3px 0; }
+.bubble { -webkit-tap-highlight-color: transparent; }
+
+/* ── EDIT MSG OVERLAY ────────────── */
+#editOverlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.6);
+  backdrop-filter: blur(8px); z-index: 600;
+  display: none; align-items: flex-end; justify-content: center;
+}
+#editOverlay.open { display: flex; }
+.edit-card {
+  background: var(--bg2); border-radius: 20px 20px 0 0;
+  width: 100%; max-width: 640px;
+  padding: 18px 16px calc(env(safe-area-inset-bottom,0px) + 20px);
+}
+.edit-card-title {
+  font-size: 13px; font-weight: 600; color: var(--gray);
+  text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px;
+}
+.edit-textarea {
+  width: 100%; background: var(--bg3); border: none; outline: none;
+  padding: 12px 14px; border-radius: 12px;
+  font-size: 15px; color: var(--label); font-family: inherit;
+  resize: none; line-height: 1.45; min-height: 80px;
+}
+.edit-actions { display: flex; gap: 10px; margin-top: 10px; }
+.edit-btn {
+  flex: 1; padding: 13px; border-radius: 12px; border: none; outline: none;
+  font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit;
+  transition: opacity .15s;
+}
+.edit-btn:active { opacity: .75; }
+.edit-btn.cancel { background: var(--bg3); color: var(--label2); }
+.edit-btn.save   { background: var(--blue); color: #fff; }
+
+/* mobile fixes */
+@media (max-width: 640px) {
+  #sidebar {
+    position: fixed; inset: 0; width: 100%; z-index: 10;
+    transition: transform .3s cubic-bezier(.25,.46,.45,.94);
+  }
+  #chatPanel { position: fixed; inset: 0; z-index: 9; }
+  #chatView { height: 100% !important; }
+  .bwrap { max-width: min(78%, 280px); }
+  #msgs { padding: 10px; }
+  .input-bar { padding: 8px 10px calc(env(safe-area-inset-bottom,0px) + 10px); }
+  .user-msg-btn { padding: 8px 16px; font-size: 13px; }
+}
+
+/* ── ATTACH MENU ─────────────────── */
+.attach-menu {
+  position: fixed; z-index: 500;
+  background: var(--bg2); border: .5px solid var(--sep);
+  border-radius: 16px; padding: 6px 0; min-width: 190px;
+  box-shadow: 0 12px 36px rgba(0,0,0,.55);
+  animation: menuPop .15s cubic-bezier(.34,1.56,.64,1);
+}
+.attach-item {
+  padding: 13px 18px; font-size: 15px; cursor: pointer;
+  display: flex; align-items: center; gap: 12px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .1s;
+}
+.attach-item:active { background: var(--bg3); }
+.attach-item .ai-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; color: #fff; flex-shrink: 0;
+}
+.attach-item .ai-label { font-size: 15px; }
+.attach-sep { height: .5px; background: var(--sep); margin: 3px 0; }
+
+/* image preview in input */
+.img-preview-wrap {
+  padding: 8px 14px 0; display: flex; gap: 8px; flex-wrap: wrap;
+}
+.img-preview {
+  width: 64px; height: 64px; border-radius: 10px;
+  object-fit: cover; position: relative;
+}
+.img-preview-item { position: relative; display: inline-block; }
+.img-preview-item .remove-prev {
+  position: absolute; top: -5px; right: -5px;
+  width: 18px; height: 18px; background: var(--red);
+  border-radius: 50%; border: none; color: #fff;
+  font-size: 10px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; z-index: 2;
+}
 </style>
 </head>
 <body>
@@ -442,8 +549,23 @@ html, body {
         </div>
       </div>
       <div id="msgs"></div>
+      <!-- hidden file pickers -->
+      <input type="file" id="imgPicker" accept="image/*" multiple style="display:none" onchange="handleImagePick(this)"/>
+      <input type="file" id="docPicker" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" multiple style="display:none" onchange="handleDocPick(this)"/>
+      <div id="attachMenu" class="attach-menu" style="display:none">
+        <div class="attach-item" onclick="document.getElementById('imgPicker').click();closeAttachMenu()">
+          <div class="ai-icon" style="background:#34C759"><i class="fas fa-image"></i></div>
+          <span class="ai-label">Photo / Video</span>
+        </div>
+        <div class="attach-sep"></div>
+        <div class="attach-item" onclick="document.getElementById('docPicker').click();closeAttachMenu()">
+          <div class="ai-icon" style="background:#FF9500"><i class="fas fa-file-alt"></i></div>
+          <span class="ai-label">Document</span>
+        </div>
+      </div>
+      <div id="previewBar" class="img-preview-wrap" style="display:none"></div>
       <div class="input-bar">
-        <i class="fas fa-plus-circle plus-btn"></i>
+        <i class="fas fa-plus-circle plus-btn" onclick="toggleAttachMenu(event)"></i>
         <div class="input-wrap">
           <textarea id="msgInput" rows="1" placeholder="iMessage" oninput="resizeTA(this)" onkeydown="onKey(event)"></textarea>
           <button class="send-btn" id="sendBtn" onclick="sendMsg()" disabled>
@@ -451,6 +573,18 @@ html, body {
           </button>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MESSAGE OVERLAY -->
+<div id="editOverlay">
+  <div class="edit-card">
+    <div class="edit-card-title">Edit Message</div>
+    <textarea class="edit-textarea" id="editTextarea" rows="3"></textarea>
+    <div class="edit-actions">
+      <button class="edit-btn cancel" onclick="closeEditOverlay()">Cancel</button>
+      <button class="edit-btn save" id="editSaveBtn" onclick="saveEditedMsg()">Save</button>
     </div>
   </div>
 </div>
@@ -486,6 +620,7 @@ const db   = firebase.firestore();
 // ── State ──────────────────────────────────
 let me = null, activeChatId = null, activeOther = null;
 let isSignUp = false, allConvs = [], convUnsub = null, msgUnsub = null, statusUnsub = null;
+let chatOpenedByUser = false; // true only when user explicitly taps a conversation
 
 // ── Helpers ────────────────────────────────
 function ini(n){ if(!n)return'?'; const p=n.trim().split(' '); return(p[0][0]+(p[1]?.[0]||'')).toUpperCase(); }
@@ -651,19 +786,29 @@ function loadPeople(){
 }
 
 window.startChatWith=async(uid,email,name)=>{
-  switchTab("chats");
-  // check existing chat
+  // check existing chat first (before switching tabs)
   const existing=allConvs.find(c=>c.members&&c.members.includes(uid));
-  if(existing){ openChat(existing.id,uid,name,avc(uid)); return; }
-  // create new
+  if(existing){
+    switchTab("chats");
+    openChat(existing.id,uid,name,avc(uid));
+    return;
+  }
+  // create new chat
   const myName=me.displayName||me.email.split("@")[0];
-  const ref=await db.collection("chats").add({
-    members:[me.uid,uid],
-    memberNames:{[me.uid]:myName,[uid]:name},
-    lastMsg:"", lastTs:firebase.firestore.FieldValue.serverTimestamp(),
-    createdAt:firebase.firestore.FieldValue.serverTimestamp()
-  });
-  openChat(ref.id,uid,name,avc(uid));
+  try{
+    const ref=await db.collection("chats").add({
+      members:[me.uid,uid],
+      memberNames:{[me.uid]:myName,[uid]:name},
+      lastMsg:'',
+      lastTs:firebase.firestore.FieldValue.serverTimestamp(),
+      unread:{[me.uid]:0,[uid]:0},
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    switchTab("chats");
+    openChat(ref.id,uid,name,avc(uid));
+  }catch(e){
+    alert('Could not start chat: '+e.message);
+  }
 };
 function loadConvs(){
   if(convUnsub) convUnsub();
@@ -850,6 +995,7 @@ window.filterList=(q)=>{
 
 // ── Open chat ──────────────────────────────
 window.openChat=async(cid,oid,oname,cc)=>{
+  chatOpenedByUser=true; // user explicitly clicked a conversation
   activeChatId=cid; activeOther={id:oid,name:oname,color:cc};
   document.getElementById('empty').style.display='none';
   const cv=document.getElementById('chatView');
@@ -883,6 +1029,7 @@ window.openChat=async(cid,oid,oname,cc)=>{
 };
 
 window.goBack=()=>{
+  chatOpenedByUser=false;
   document.getElementById('sidebar').classList.remove('hidden');
   document.getElementById('chatView').style.display='none';
   document.getElementById('empty').style.display='flex';
@@ -902,10 +1049,14 @@ function listenMsgs(cid){
       const msgs=snap.docs.map(d=>({id:d.id,...d.data()}));
       patchMsgs(msgs, firstLoad);
       firstLoad=false;
-      // only receiver marks messages as read (not the sender)
-      if(activeChatId===cid && activeOther && me){
-        const hasUnread=msgs.some(m=>m.uid!==me.uid && !m.read);
-        if(hasUnread) markMessagesRead(cid);
+      // only mark read if the user deliberately opened this chat AND it's visible
+      if(activeChatId===cid && activeOther && me && !document.hidden && chatOpenedByUser){
+        const cv=document.getElementById('chatView');
+        const chatVisible = cv && cv.style.display!=='none';
+        if(chatVisible){
+          const hasUnread=msgs.some(m=>m.uid!==me.uid && !m.read);
+          if(hasUnread) markMessagesRead(cid);
+        }
       }
     });
 }
@@ -924,12 +1075,33 @@ function buildMsgNode(m, i, msgs){
   div.innerHTML=`
     ${!isOut?`<div class="sav ${cc} ${showAv?'':'hide'}">${ini(m.senderName||'?')}</div>`:''}
     <div class="bwrap">
-      <div class="bubble ${isOut?'out':'in'}">${esc(m.text)}</div>
+      ${m.imageData
+        ? `<img src="${m.imageData}" style="max-width:220px;max-height:220px;border-radius:14px;display:block;cursor:pointer" onclick="this.requestFullscreen&&this.requestFullscreen()" />`
+        : m.fileType==='image'
+          ? `<div class="bubble ${isOut?'out':'in'}" style="display:flex;align-items:center;gap:8px;padding:10px 14px;"><span style="font-size:22px;">📷</span><span>${esc(m.text||'Photo')}</span></div>`
+          : m.fileType==='document'
+            ? `<div class="bubble ${isOut?'out':'in'}">📎 ${esc(m.fileName||m.text)}</div>`
+            : `<div class="bubble ${isOut?'out':'in'}">${esc(m.text)}</div>`
+      }
       <div class="mmeta ${isOut?'out':''}">
         <span>${tstr}</span>
         ${isOut?`<span class="tick-wrap">${m.read?'<span class="seen-label">Seen</span>':'<i class="fas fa-check-double"></i>'}</span>`:''}
       </div>
     </div>`;
+  // attach action menu for own messages — at creation time so it's always there
+  if(isOut){
+    const bbl=div.querySelector('.bubble');
+    let _lpt=null;
+    bbl.addEventListener('contextmenu',e=>{
+      e.preventDefault(); e.stopPropagation();
+      showMsgMenu(e, m.id);
+    });
+    bbl.addEventListener('touchstart',e=>{
+      _lpt=setTimeout(()=>showMsgMenu(e, m.id), 500);
+    },{passive:true});
+    bbl.addEventListener('touchend',()=>{clearTimeout(_lpt);_lpt=null;});
+    bbl.addEventListener('touchmove',()=>{clearTimeout(_lpt);_lpt=null;});
+  }
   return div;
 }
 
@@ -973,7 +1145,21 @@ function patchMsgs(msgs, scroll){
     const existing=el.querySelector(`.msg-row[data-id="${m.id}"]`);
     const isOut=m.uid===me.uid;
     if(existing){
-      // compare data-read to avoid unnecessary DOM updates
+      // update bubble text if message was edited
+      const bubble=existing.querySelector('.bubble');
+      if(bubble && bubble.textContent.trim()!==m.text){
+        bubble.textContent=m.text;
+        // add/update edited label in mmeta
+        const mmeta=existing.querySelector('.mmeta');
+        if(mmeta && !mmeta.querySelector('.edited-lbl')){
+          const el2=document.createElement('span');
+          el2.className='edited-lbl';
+          el2.style.cssText='font-size:10px;opacity:.5;margin-left:3px;';
+          el2.textContent='edited';
+          mmeta.insertBefore(el2, mmeta.children[1]||null);
+        }
+      }
+      // update read status
       const wasRead=existing.dataset.read==='1';
       const isRead=!!m.read;
       if(isOut && wasRead!==isRead){
@@ -1089,6 +1275,221 @@ window.createChat=async()=>{
     openChat(ref.id,oid,oname,avc(oid));
   } catch(e){ errEl.textContent='Failed: '+e.message; }
 };
+// ── Message action menu ────────────────────
+let _editMsgId=null, _editChatId=null;
+
+function closeMsgMenu(){
+  document.querySelectorAll('.msg-action-menu').forEach(m=>m.remove());
+}
+
+function showMsgMenu(e, msgId){
+  closeMsgMenu();
+  const menu=document.createElement('div');
+  menu.className='msg-action-menu';
+  const sid=msgId.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  menu.innerHTML=`
+    <div class="msg-action-item" onclick="openEditMsg('${sid}')">
+      <i class="fas fa-pen"></i> Edit
+    </div>
+    <div class="msg-action-sep"></div>
+    <div class="msg-action-item danger" onclick="deleteMsgById('${sid}')">
+      <i class="fas fa-trash"></i> Delete
+    </div>`;
+  const vw=window.innerWidth, vh=window.innerHeight;
+  const mx=e.clientX??e.touches?.[0]?.clientX??vw/2;
+  const my=e.clientY??e.touches?.[0]?.clientY??vh/2;
+  menu.style.left=Math.min(mx, vw-180)+'px';
+  menu.style.top =Math.min(my+10, vh-110)+'px';
+  document.body.appendChild(menu);
+  setTimeout(()=>document.addEventListener('click',closeMsgMenu,{once:true}),50);
+}
+
+window.openEditMsg=(msgId)=>{
+  closeMsgMenu();
+  _editMsgId=msgId; _editChatId=activeChatId;
+  const bubble=document.querySelector(`.msg-row[data-id="${msgId}"] .bubble`);
+  document.getElementById('editTextarea').value=bubble?.textContent?.trim()||'';
+  document.getElementById('editOverlay').classList.add('open');
+  setTimeout(()=>{
+    const ta=document.getElementById('editTextarea');
+    ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length);
+  },150);
+};
+
+window.closeEditOverlay=()=>{
+  document.getElementById('editOverlay').classList.remove('open');
+  _editMsgId=null; _editChatId=null;
+};
+
+window.saveEditedMsg=async()=>{
+  const newText=document.getElementById('editTextarea').value.trim();
+  if(!newText||!_editMsgId||!_editChatId) return;
+  const btn=document.getElementById('editSaveBtn');
+  btn.disabled=true; btn.textContent='Saving…';
+  try{
+    await db.collection('chats').doc(_editChatId)
+      .collection('messages').doc(_editMsgId).update({
+        text:newText, edited:true,
+        editedAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    closeEditOverlay();
+  }catch(e){ alert('Save failed: '+e.message); }
+  finally{ btn.disabled=false; btn.textContent='Save'; }
+};
+
+window.deleteMsgById=async(msgId)=>{
+  closeMsgMenu();
+  if(!activeChatId||!msgId) return;
+  if(!confirm('Delete this message?')) return;
+  try{
+    await db.collection('chats').doc(activeChatId)
+      .collection('messages').doc(msgId).delete();
+  }catch(e){ alert('Delete failed: '+e.message); }
+};
+
+document.getElementById('editOverlay').addEventListener('click',e=>{
+  if(e.target.id==='editOverlay') closeEditOverlay();
+});
+
+// ── Attach menu ────────────────────────────
+let _pendingFiles=[];
+
+function toggleAttachMenu(e){
+  e.stopPropagation();
+  const m=document.getElementById('attachMenu');
+  if(m.style.display==='none'){
+    // position above the plus button
+    const rect=e.currentTarget.getBoundingClientRect();
+    m.style.display='block';
+    m.style.left=rect.left+'px';
+    m.style.bottom=(window.innerHeight-rect.top+8)+'px';
+    m.style.top='auto';
+    setTimeout(()=>document.addEventListener('click',closeAttachMenu,{once:true}),50);
+  } else {
+    closeAttachMenu();
+  }
+}
+function closeAttachMenu(){
+  const m=document.getElementById('attachMenu');
+  if(m) m.style.display='none';
+}
+
+function handleImagePick(input){
+  const files=[...input.files];
+  if(!files.length) return;
+  files.forEach(f=>{ if(!_pendingFiles.find(p=>p.name===f.name&&p.size===f.size)) _pendingFiles.push(f); });
+  renderPreviews();
+  input.value='';
+}
+
+function handleDocPick(input){
+  const files=[...input.files];
+  if(!files.length) return;
+  files.forEach(f=>{ if(!_pendingFiles.find(p=>p.name===f.name&&p.size===f.size)) _pendingFiles.push(f); });
+  renderPreviews();
+  input.value='';
+}
+
+function renderPreviews(){
+  const bar=document.getElementById('previewBar');
+  if(!_pendingFiles.length){ bar.style.display='none'; bar.innerHTML=''; return; }
+  bar.style.display='flex';
+  bar.innerHTML=_pendingFiles.map((f,i)=>{
+    const isImg=f.type.startsWith('image/');
+    return `<div class="img-preview-item">
+      ${isImg
+        ? `<img class="img-preview" src="${URL.createObjectURL(f)}" />`
+        : `<div class="img-preview" style="background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;color:var(--gray);padding:4px;text-align:center;"><i class="fas fa-file-alt" style="font-size:20px;color:var(--blue)"></i><span style="overflow:hidden;max-width:56px;white-space:nowrap;text-overflow:ellipsis">${esc(f.name)}</span></div>`}
+      <button class="remove-prev" onclick="removePending(${i})"><i class="fas fa-times"></i></button>
+    </div>`;
+  }).join('');
+  // enable send button if there are pending files
+  document.getElementById('sendBtn').disabled=false;
+}
+
+window.removePending=(i)=>{
+  _pendingFiles.splice(i,1);
+  renderPreviews();
+  if(!_pendingFiles.length) document.getElementById('sendBtn').disabled=!document.getElementById('msgInput').value.trim();
+};
+
+// ── Override sendMsg to handle attachments ──
+const _origSendMsg=window.sendMsg;
+window.sendMsg=async()=>{
+  if(_pendingFiles.length){
+    await sendWithAttachments();
+  } else {
+    await _origSendMsg();
+  }
+};
+
+// ── Compress image to base64 for Firestore storage ──
+function compressImageToBase64(file, maxPx=800, quality=0.7){
+  return new Promise((resolve, reject)=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      let {width:w, height:h}=img;
+      if(w>maxPx||h>maxPx){
+        if(w>h){ h=Math.round(h*maxPx/w); w=maxPx; }
+        else   { w=Math.round(w*maxPx/h); h=maxPx; }
+      }
+      const canvas=document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror=reject;
+    img.src=url;
+  });
+}
+
+async function sendWithAttachments(){
+  if(!activeChatId) return;
+  const inp=document.getElementById('msgInput');
+  const caption=inp.value.trim();
+  inp.value=''; inp.style.height='auto';
+  document.getElementById('sendBtn').disabled=true;
+  const sn=me.displayName||me.email.split('@')[0];
+  const files=[..._pendingFiles];
+  _pendingFiles=[];
+  renderPreviews();
+
+  for(const f of files){
+    const isImg=f.type.startsWith('image/');
+    // Convert to base64 data URL to store in Firestore (small files only — for demo)
+    // For production use Firebase Storage; here we store a placeholder + filename
+    const msgData={
+      uid:me.uid, senderName:sn,
+      ts:firebase.firestore.FieldValue.serverTimestamp(),
+      read:false,
+      fileType: isImg?'image':'document',
+      fileName: f.name,
+      fileSize: f.size,
+      text: caption||(isImg?'📷 Photo':'📎 '+f.name)
+    };
+    // Embed image as base64 — compress to fit Firestore's 1MB doc limit
+    if(isImg){
+      const b64=await compressImageToBase64(f, 800, 0.7);
+      msgData.imageData=b64;
+      msgData.text=caption||'📷 Photo';
+    }
+    try{
+      await db.collection('chats').doc(activeChatId).collection('messages').add(msgData);
+    }catch(e){ console.error('send file failed',e); }
+  }
+  // also send caption as separate text if files were sent and caption exists
+  // (caption is embedded in first file msg above, so skip duplicate)
+  const oid=activeOther?.id;
+  const cur=allConvs.find(c=>c.id===activeChatId);
+  await db.collection('chats').doc(activeChatId).update({
+    lastMsg: caption||(files[0].type.startsWith('image/')?'📷 Photo':'📎 '+files[0].name),
+    lastTs:firebase.firestore.FieldValue.serverTimestamp(),
+    ...(oid?{[`unread.${oid}`]:(cur?.unread?.[oid]||0)+1}:{})
+  }).catch(()=>{});
+}
+
 </script>
 </body>
 </html>
